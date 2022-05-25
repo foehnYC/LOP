@@ -4,7 +4,7 @@ import torch as th
 
 
 # This multi-agent controller shares parameters between agents
-class ODANMAC:
+class SLOPMAC:
     def __init__(self, scheme, groups, args):
         self.n_agents = args.n_agents
         self.args = args
@@ -91,34 +91,43 @@ class ODANMAC:
         # Assumes homogenous agents with flat observations.
         # Other MACs might want to e.g. delegate building inputs to each agent
         bs = batch.batch_size
-        tutor_inputs, trainee_inputs = [], []
-        tutor_inputs.append(batch["obs"][:, t])
+        tutor_inputs = {'state': [], 'obs': []}
+        tutor_inputs['state'].append(batch['state'][:, t].unsqueeze(1).repeat(1, self.args.n_agents, 1))
+        tutor_inputs['obs'].append(batch["obs"][:, t])  # b1av
+        trainee_inputs = []
         trainee_inputs.append(batch["obs"][:, t])  # b1av
 
         if self.args.obs_last_action:
             if t == 0:
-                tutor_inputs.append(th.zeros_like(batch["actions_onehot"][:, t]))
+                tutor_inputs['state'].append(th.zeros_like(batch["actions_onehot"][:, t]))
+                tutor_inputs['obs'].append(th.zeros_like(batch["actions_onehot"][:, t]))
                 trainee_inputs.append(th.zeros_like(batch["actions_onehot"][:, t]))
             else:
-                tutor_inputs.append(th.zeros_like(batch["actions_onehot"][:, t - 1]))
+                tutor_inputs['state'].append(batch["actions_onehot"][:, t - 1])
+                tutor_inputs['obs'].append(th.zeros_like(batch["actions_onehot"][:, t - 1]))
                 trainee_inputs.append(th.zeros_like(batch["actions_onehot"][:, t - 1]))
         if self.args.obs_agent_id:
-            tutor_inputs.append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).expand(bs, -1, -1))
+            tutor_inputs['state'].append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).expand(bs, -1, -1))
+            tutor_inputs['obs'].append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).expand(bs, -1, -1))
             trainee_inputs.append(th.eye(self.n_agents, device=batch.device).unsqueeze(0).expand(bs, -1, -1))
 
-        tutor_inputs = th.cat([x.reshape(bs, self.n_agents, -1) for x in tutor_inputs], dim=-1)
+        tutor_inputs['state'] = th.cat([x.reshape(bs, self.n_agents, -1) for x in tutor_inputs['state']], dim=-1)
+        tutor_inputs['obs'] = th.cat([x.reshape(bs, self.n_agents, -1) for x in tutor_inputs['obs']], dim=-1)
         trainee_inputs = th.cat([x.reshape(bs, self.n_agents, -1) for x in trainee_inputs], dim=-1)
         return tutor_inputs, trainee_inputs
 
     def _get_input_shape(self, scheme):
         tutor_input_shape = dict()
-        tutor_input_shape = scheme["obs"]["vshape"]
+        tutor_input_shape['state'] = scheme["state"]["vshape"]
+        tutor_input_shape['obs'] = scheme["obs"]["vshape"]
         trainee_input_shape = scheme["obs"]["vshape"]
         if self.args.obs_last_action:
-            tutor_input_shape += scheme["actions_onehot"]["vshape"][0]
+            tutor_input_shape['state'] += scheme["actions_onehot"]["vshape"][0]
+            tutor_input_shape['obs'] += scheme["actions_onehot"]["vshape"][0]
             trainee_input_shape += scheme["actions_onehot"]["vshape"][0]
         if self.args.obs_agent_id:
-            tutor_input_shape += self.n_agents
+            tutor_input_shape['state'] += self.n_agents
+            tutor_input_shape['obs'] += self.n_agents
             trainee_input_shape += self.n_agents
 
         return tutor_input_shape, trainee_input_shape

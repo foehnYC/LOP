@@ -1,4 +1,4 @@
 REGISTRY = {}
 
-from .dan_runner import DANRunner
-REGISTRY["dan"] = DANRunner
+from .lop_runner import LOPRunner
+REGISTRY["lop"] = LOPRunner

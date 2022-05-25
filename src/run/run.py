@@ -35,7 +35,7 @@ def run(_run, _config, _log):
     _log.info("\n\n" + experiment_params + "\n")
 
     # configure tensorboard logger
-    unique_token = "{}_{}_{}_{}".format(args.env_args['map_name'],args.name, args.tutor_input_type, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
+    unique_token = "{}_{}_{}".format(args.env_args['map_name'], args.name, datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))
     args.unique_token = unique_token
     if args.use_tensorboard:
         tb_logs_direc = os.path.join(dirname(dirname(abspath(__file__))), "results", "tb_logs")
@@ -168,7 +168,7 @@ def run_sequential(args, logger):
         # Run for a whole episode at a time
 
         with th.no_grad():
-            episode_batch = runner.run(test_mode=False)
+            episode_batch = runner.run(agent='tutor', test_mode=False)
             buffer.insert_episode_batch(episode_batch)
 
         if buffer.can_sample(args.batch_size):

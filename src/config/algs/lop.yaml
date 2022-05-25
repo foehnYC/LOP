@@ -3,13 +3,12 @@
 # use epsilon greedy action selector
 tutor_action_selector: "epsilon_greedy"
 trainee_action_selector: "epsilon_greedy"
-# trainee_action_selector: "multinomial"
 epsilon_start: 1.0
 epsilon_finish: 0.05
-epsilon_anneal_time: 100000 # 500000 for 6h_vs_8z
+epsilon_anneal_time: 100000
 
-runner: "dan"
-batch_size_run: 8 # batch_size_run=4, buffer_size = 2500, batch_size=64  for 3s5z_vs_3s6z
+runner: "lop"
+batch_size_run: 8
 buffer_size: 5000 
 batch_size: 128
 optimizer: 'adam'
@@ -20,14 +19,14 @@ t_max: 2050000
 target_update_interval: 200
 
 # use the Q_Learner to train
-mac: "sdan_mac"
+mac: "slop_mac"
 tutor_agent: "s_rnn"
 
 trainee_agent: "rnn"
 agent_output_type: "q"
 mask_before_softmax: False
 
-learner: "ndan_learner"
+learner: "lop_learner"
 mixer: "qmix"
 mixing_embed_dim: 32
 hypernet_embed: 64

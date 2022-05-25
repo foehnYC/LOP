@@ -8,7 +8,7 @@ from utils.th_utils import get_parameters_num
 import torch.nn.functional as F
 
 
-class NDANLearner:
+class LOPLearner:
     def __init__(self, mac, scheme, logger, args):
         self.args = args
         self.mac = mac
@@ -38,14 +38,11 @@ class NDANLearner:
             self.trainee_optimiser = RMSprop(params=self.trainee_params, lr=args.trainee_lr, alpha=args.optim_alpha,
                                              eps=args.optim_eps)
 
-        # a little wasteful to deepcopy (e.g. duplicates action selector), but should work for any MAC
         self.target_mac = copy.deepcopy(mac)
 
         self.log_stats_t = -self.args.learner_log_interval - 1
 
         self.train_t = 0
-
-        # th.autograd.set_detect_anomaly(True)
 
     def train(self, batch: EpisodeBatch, t_env: int, episode_num: int):
         # Get the relevant quantities
@@ -103,7 +100,7 @@ class NDANLearner:
 
         mask = mask.expand_as(td_error)
         masked_td_error = td_error * mask
-        loss = L_td = masked_td_error.sum() / mask.sum()
+        loss = masked_td_error.sum() / mask.sum()
 
         # Optimise Tutor
         self.tutor_optimiser.zero_grad()
@@ -115,8 +112,6 @@ class NDANLearner:
         trainee_out[avail_actions == 0] = -9999
         target_distribution = F.softmax(mac_out_detach, dim=-1)[:, :-1]
         actions_probs = F.softmax(trainee_out, dim=-1)[:, :-1]
-        cur_max_actions = cur_max_actions[:, :-1].squeeze(3)
-        mask_actor = mask.expand_as(cur_max_actions)
 
         _, _, _, v = actions_probs.size()  # bs, num_env, num_agent, v
         actions_probs = actions_probs.reshape(-1, v)  # bs, num_env, num_agent, v
@@ -133,10 +128,9 @@ class NDANLearner:
             self.last_target_update_episode = episode_num
 
         if t_env - self.log_stats_t >= self.args.learner_log_interval:
-            self.logger.log_stat("loss_td", L_td.item(), t_env)
-            self.logger.log_stat("loss_ce", actor_loss.item(), t_env)
+            self.logger.log_stat("loss_td", loss.item(), t_env)
+            self.logger.log_stat("loss_kd", actor_loss.item(), t_env)
             self.logger.log_stat("grad_norm", grad_norm, t_env)
-            # self.logger.log_stat("accuracy", accuracy, t_env)
             mask_elems = mask.sum().item()
             self.logger.log_stat("td_error_abs", (masked_td_error.abs().sum().item() / mask_elems), t_env)
             self.logger.log_stat("q_taken_mean",

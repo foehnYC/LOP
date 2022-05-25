@@ -1,10 +1,10 @@
 REGISTRY = {}
 
 from .basic_controller import BasicMAC
-from .sdan_controller import SDANMAC
-from .odan_controller import ODANMAC
+from .slop_controller import SLOPMAC
+from .olop_controller import OLOPMAC
 
 
 REGISTRY["basic_mac"] = BasicMAC
-REGISTRY["sdan_mac"] = SDANMAC
-REGISTRY["odan_mac"] = ODANMAC
+REGISTRY["slop_mac"] = SLOPMAC
+REGISTRY["olop_mac"] = OLOPMAC

@@ -8,7 +8,7 @@ import torch as th
 
 # Based (very) heavily on SubprocVecEnv from OpenAI Baselines
 # https://github.com/openai/baselines/blob/master/baselines/common/vec_env/subproc_vec_env.py
-class DANRunner:
+class LOPRunner:
 
     def __init__(self, args, logger):
         self.args = args

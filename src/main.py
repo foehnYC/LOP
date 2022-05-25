@@ -21,9 +21,6 @@ ex.logger = logger
 ex.captured_out_filter = apply_backspaces_and_linefeeds
 
 results_path = join(dirname(dirname(abspath(__file__))), "results")
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
-os.environ["SC2PATH"] = "/home/StarCraftII4.6.2"
-
 
 @ex.main
 def my_main(_run, _config, _log):

@@ -1,5 +1,5 @@
-from .ndan_learner import NDANLearner
+from .lop_learner import LOPLearner
 
 REGISTRY = {}
 
-REGISTRY["ndan_learner"] = NDANLearner
+REGISTRY["lop_learner"] = LOPLearner
